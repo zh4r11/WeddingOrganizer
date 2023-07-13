@@ -5,17 +5,108 @@
  */
 package form;
 
+import static form.pelanggan.tabmode;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import koneksi.koneksi;
+
 /**
  *
  * @author Azhari
  */
 public class gedung extends javax.swing.JFrame {
+    public static DefaultTableModel tabmode;
+    private Connection conn = new koneksi().connect();
+    String ID = "";
+    String KD = "";
+    Boolean isClick = false;
 
     /**
      * Creates new form gedung
      */
     public gedung() {
         initComponents();
+        kosong();
+        datatable();
+    }
+    
+    protected void kosong() {
+        tKode.setText("");
+        tNama.setText("");
+        tHarga.setText("");
+        tAlamat.setText("");
+        tCari.setText("");
+    }
+    
+    protected void datatable(){
+        Object[] Baris ={"Kode Gedung","Nama","Telp","Status"};
+        tabmode = new DefaultTableModel(null, Baris);
+        tbGedung.setModel(tabmode);
+        String cariitem = tCari.getText();
+        String pattern = "dd-MM-yyyy";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+
+        try {
+            String sql = "SELECT * FROM gedung where kd_gedung like '%"+cariitem+"%' or nama_gedung like'%"+cariitem+"%' order by kd_gedung asc";
+            Statement stat = conn.createStatement();
+            ResultSet hasil = stat.executeQuery(sql);
+            while (hasil.next()){
+                String id = hasil.getString("id_gedung");
+                String kd = hasil.getString("kd_gedung");
+                String nama = hasil.getString("nama_gedung");
+                String telp = hasil.getString("telp");
+                Boolean status = hasil.getBoolean("status");
+                String status2 = "";
+                if(status){
+                    status2 = "Tersedia";
+                }else{
+                    status2 = "Tidak Tersedia";
+                }
+                String[] data = {kd,nama,telp,status2};
+                tabmode.addRow(data);
+            }
+        }catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "data gagal dipanggil"+e);
+        }
+    }
+    
+    protected Boolean validateKode(String Kode){
+        Boolean validate = false;
+        String sql = "select IFNULL((select kd_gedung from gedung where kd_gedung = '"+Kode+"'),'') as kode";
+        try {
+            Statement stat = conn.createStatement();
+            ResultSet hasil = stat.executeQuery(sql);
+            while (hasil.next()){
+                String kd = hasil.getString("nik");
+                if (!kd.equals(Kode)){
+                    validate = true;
+                }
+            }
+        }catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "data gagal dipanggil"+e);
+        }
+        return validate;
+    }
+    
+    protected String findId(String Kode){
+        String id = "";
+        String sql = "SELECT id_gedung FROM pelanggan where kd_gedung = '"+Kode+"'";
+        try {
+            Statement stat = conn.createStatement();
+            ResultSet hasil = stat.executeQuery(sql);
+            while (hasil.next()){
+                id = hasil.getString("id_gedung");
+            }
+        }catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "data gagal dipanggil"+e);
+        }
+        return id;
     }
 
     /**
@@ -34,22 +125,22 @@ public class gedung extends javax.swing.JFrame {
         tNama = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        tTelp = new javax.swing.JTextField();
+        tHarga = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         tAlamat = new javax.swing.JTextArea();
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
-        jcJbt = new javax.swing.JComboBox<>();
+        jcStat = new javax.swing.JComboBox<>();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jButton6 = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
-        tbPegawai = new javax.swing.JTable();
+        tbGedung = new javax.swing.JTable();
         tCari = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
-        tNama1 = new javax.swing.JTextField();
+        tTelp = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -74,6 +165,8 @@ public class gedung extends javax.swing.JFrame {
         jLabel6.setText("Alamat");
 
         jLabel7.setText("Status");
+
+        jcStat.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Tidak Tersedia", "Tersedia" }));
 
         jButton2.setText("SIMPAN");
         jButton2.addActionListener(new java.awt.event.ActionListener() {
@@ -110,7 +203,7 @@ public class gedung extends javax.swing.JFrame {
             }
         });
 
-        tbPegawai.setModel(new javax.swing.table.DefaultTableModel(
+        tbGedung.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
                 {null, null, null, null},
@@ -121,12 +214,12 @@ public class gedung extends javax.swing.JFrame {
                 "Title 1", "Title 2", "Title 3", "Title 4"
             }
         ));
-        tbPegawai.addMouseListener(new java.awt.event.MouseAdapter() {
+        tbGedung.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tbPegawaiMouseClicked(evt);
+                tbGedungMouseClicked(evt);
             }
         });
-        jScrollPane3.setViewportView(tbPegawai);
+        jScrollPane3.setViewportView(tbGedung);
 
         jButton1.setText("Cari");
 
@@ -162,8 +255,8 @@ public class gedung extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(tKode, javax.swing.GroupLayout.DEFAULT_SIZE, 183, Short.MAX_VALUE)
                                     .addComponent(tNama)
-                                    .addComponent(tTelp)
-                                    .addComponent(tNama1))
+                                    .addComponent(tHarga)
+                                    .addComponent(tTelp))
                                 .addGap(132, 132, 132)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addGroup(layout.createSequentialGroup()
@@ -173,7 +266,7 @@ public class gedung extends javax.swing.JFrame {
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(jLabel7)
                                         .addGap(18, 18, 18)
-                                        .addComponent(jcJbt, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                        .addComponent(jcStat, javax.swing.GroupLayout.PREFERRED_SIZE, 243, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(jScrollPane3)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
@@ -202,15 +295,15 @@ public class gedung extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel4)
-                            .addComponent(tNama1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(tTelp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(18, 18, 18)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel5)
-                                .addComponent(tTelp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(tHarga, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(jLabel7)
-                                .addComponent(jcJbt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addComponent(jcStat, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -233,98 +326,122 @@ public class gedung extends javax.swing.JFrame {
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
         // TODO add your handling code here:
-//        String Kode = tKode.getText();
-//        String jbt = jcJbt.getSelectedItem().toString();
-//        String kdJbt = jabatan(jbt,1);
-//        if (!KD.equals(Kode)){
-//            String sqlx = "insert into pegawai(kd_pgw,nama_pgw,tgl_lahir,telp_pgw,alamat_pgw,jabatan,createdat,updatedat) values (?,?,?,?,?,?,?,?)";
-//            try {
-//                PreparedStatement statx = conn.prepareStatement(sqlx);
-//                statx.setString(1, tKode.getText());
-//                statx.setString(2, tNama.getText());
-//                statx.setString(3, new SimpleDateFormat("yyyy-MM-dd").format(tTgl.getDate()));
-//                statx.setString(4, tTelp.getText());
-//                statx.setString(5, tAlamat.getText());
-//                statx.setString(6, kdJbt);
-//                statx.setString(7, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
-//                statx.setString(8, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
-//                statx.executeUpdate();
-//                JOptionPane.showMessageDialog(null, "data berhasil disimpan");
-//            }catch (Exception e) {
-//                JOptionPane.showMessageDialog(null, "data gagal disimpan"+e);
-//                KD= "";
-//                kosong();
-//                datatable();
-//                autonumber();
-//            }
-//        }else{
-//            JOptionPane.showMessageDialog(null, "Kode Pegawai sudah ada");
-//        }
-//        KD= "";
-//        kosong();
-//        datatable();
-//        autonumber();
+        if(!isClick){
+            String Kode = tKode.getText();
+            Boolean validateKode = validateKode(Kode);
+            int stat = jcStat.getSelectedIndex();
+            if (validateKode){
+                String sqlx = "insert into gedung(kd_gedung,nama_gedung,telp,alamat,harga,status,createdat,updatedat) values (?,?,?,?,?,?,?,?)";
+                try {
+                    PreparedStatement statx = conn.prepareStatement(sqlx);
+                    statx.setString(1, tKode.getText());
+                    statx.setString(2, tNama.getText());
+                    statx.setString(3, tTelp.getText());
+                    statx.setString(4, tAlamat.getText());
+                    statx.setString(5, tHarga.getText());
+                    statx.setString(6, String.valueOf(stat));
+                    statx.setString(7, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
+                    statx.setString(8, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
+                    statx.executeUpdate();
+                    JOptionPane.showMessageDialog(null, "data berhasil disimpan");
+                }catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "data gagal disimpan"+e);
+                    kosong();
+                    datatable();
+                }
+            }else{
+                JOptionPane.showMessageDialog(null, "NIK sudah terdaftar");
+            }
+            kosong();
+            datatable();
+        }else{
+            JOptionPane.showMessageDialog(null, "data yg sudah tersimpan tidak bisa dijadikan data baru!");
+        }
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         // TODO add your handling code here:
-//        String jbt = jcJbt.getSelectedItem().toString();
-//        String kdJbt = jabatan(jbt,1);
-//        try{
-//            String sql = "update pegawai set nama_pgw=?,tgl_lahir=?,telp_pgw=?,alamat_pgw=?,jabatan=?,updatedAt=? where kd_pgw='"+tKode.getText()+"' and id = '"+ID+"'";
-//            PreparedStatement stat = conn.prepareStatement(sql);
-//            stat.setString(1, tNama.getText());
-//            stat.setString(2, new SimpleDateFormat("yyyy-MM-dd").format(tTgl.getDate()));
-//            stat.setString(3, tTelp.getText());
-//            stat.setString(4, tAlamat.getText());
-//            stat.setString(5, kdJbt);
-//            stat.setString(6, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
-//            stat.executeUpdate();
-//            JOptionPane.showMessageDialog(null, "data berhasil diubah");
-//
-//        }
-//        catch (SQLException e){
-//            JOptionPane.showMessageDialog(null, "data gagal diubah | "+e);
-//            KD= "";
-//            kosong();
-//            datatable();
-//            autonumber();
-//        }
-//        KD= "";
-//        kosong();
-//        datatable();
-//        autonumber();
+        String id = findId(KD);
+        String newKode = tKode.getText();
+        int status = jcStat.getSelectedIndex();
+        
+        if(KD.equals(newKode)){
+            try{
+                String sql = "update gedung set kd_gedung=?,nama_gedung=?,telp=?,alamat=?,status=?,updatedAt=? where id_gedung = '"+id+"'";
+                PreparedStatement stat = conn.prepareStatement(sql);
+                stat.setString(1, newKode);
+                stat.setString(2, tNama.getText());
+                stat.setString(3, tTelp.getText());
+                stat.setString(4, tAlamat.getText());
+                stat.setString(5, String.valueOf(status));
+                stat.setString(6, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
+                stat.executeUpdate();
+                JOptionPane.showMessageDialog(null, "data berhasil diubah");
+
+            }
+            catch (Exception e){
+                JOptionPane.showMessageDialog(null, "data gagal diubah | "+e);
+                KD = "";
+                kosong();
+                datatable();
+            }
+        }else{
+            Boolean validateKode = validateKode(newKode);
+            if (validateKode){
+                try{
+                    String sql = "update gedung set kd_gedung=?,nama_gedung=?,telp=?,alamat=?,status=?,updatedAt=? where id_gedung = '"+id+"'";
+                PreparedStatement stat = conn.prepareStatement(sql);
+                stat.setString(1, newKode);
+                stat.setString(2, tNama.getText());
+                stat.setString(3, tTelp.getText());
+                stat.setString(4, tAlamat.getText());
+                stat.setString(5, String.valueOf(status));
+                stat.setString(6, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss",new java.util.Locale("id")).format(new Date()));
+                    stat.executeUpdate();
+                    JOptionPane.showMessageDialog(null, "data berhasil diubah");
+
+                }
+                catch (Exception e){
+                    JOptionPane.showMessageDialog(null, "data gagal diubah | "+e);
+                    KD = "";
+                    kosong();
+                    datatable();
+                }
+            }else{
+                JOptionPane.showMessageDialog(null, "NIK sudah terdaftar");
+            }
+        }
+        
+        KD = "";
+        kosong();
+        datatable();
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
         // TODO add your handling code here:
-//        int ok = JOptionPane.showConfirmDialog(null,"hapus","konfirmasi dialog",JOptionPane.YES_NO_OPTION);
-//        if (ok==0){
-//            String sql = "delete from pegawai where kd_pgw ='"+tKode.getText()+"' and id = '"+ID+"'";
-//            try{
-//                PreparedStatement stat = conn.prepareStatement(sql);
-//                stat.executeUpdate();
-//                JOptionPane.showMessageDialog(null, "data berhasil dihapus");
-//            }
-//            catch (SQLException e){
-//                JOptionPane.showMessageDialog(null, "data gagal dihapus"+e);
-//                KD= "";
-//                datatable();
-//                kosong();
-//                autonumber();
-//            }
-//        }
-//        KD= "";
-//        datatable();
-//        kosong();
-//        autonumber();
+        int ok = JOptionPane.showConfirmDialog(null,"hapus","konfirmasi dialog",JOptionPane.YES_NO_OPTION);
+        if (ok==0){
+            String id = findId(KD);
+            String sql = "delete from gedung where id_gedung ='"+id+"'";
+            try{
+                PreparedStatement stat = conn.prepareStatement(sql);
+                stat.executeUpdate();
+                JOptionPane.showMessageDialog(null, "data berhasil dihapus");
+            }
+            catch (Exception e){
+                JOptionPane.showMessageDialog(null, "data gagal dihapus"+e);
+            }
+        }
+        datatable();
+        kosong();
     }//GEN-LAST:event_jButton4ActionPerformed
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
-//        kosong();
-//        datatable();
-//        autonumber();
+        kosong();
+        datatable();
+        KD = "";
+        isClick = false;
     }//GEN-LAST:event_jButton5ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
@@ -332,34 +449,42 @@ public class gedung extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_jButton6ActionPerformed
 
-    private void tbPegawaiMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbPegawaiMouseClicked
+    private void tbGedungMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tbGedungMouseClicked
         // TODO add your handling code here:
-//        int bar = tbPegawai.getSelectedRow();
-//        String a = tabmode.getValueAt(bar,0).toString();
-//        String b = tabmode.getValueAt(bar,1).toString();
-//        String c = tabmode.getValueAt(bar,2).toString();
-//        String d = tabmode.getValueAt(bar,3).toString();
-//        String e = tabmode.getValueAt(bar,4).toString();
-//        String f = tabmode.getValueAt(bar,5).toString();
-//
-//        try {
-//            String sql = "SELECT id FROM pegawai where kd_pgw = '"+a+"' and nama_pgw = '"+b+"'";
-//            Statement stat = conn.createStatement();
-//            ResultSet hasil = stat.executeQuery(sql);
-//            while (hasil.next()){
-//                ID = hasil.getString("id");
-//                KD = a;
-//                tKode.setText(a);
-//                tNama.setText(b);
-//                tTgl.setDate(new SimpleDateFormat("yyyy-MM-dd").parse(c));
-//                tTelp.setText(d);
-//                tAlamat.setText(e);
-//                jcJbt.setSelectedItem(f);
-//            }
-//        }catch (Exception ex) {
-//            JOptionPane.showMessageDialog(null, "data gagal dipanggil | "+ex);
-//        }
-    }//GEN-LAST:event_tbPegawaiMouseClicked
+        int bar = tbGedung.getSelectedRow();
+        String a = tabmode.getValueAt(bar,0).toString();
+        String b = tabmode.getValueAt(bar,1).toString();
+        
+        try {
+            String sql = "SELECT * FROM gedung where kd_gedung = '"+a+"' and nama_gedung = '"+b+"'";
+            Statement stat = conn.createStatement();
+            ResultSet hasil = stat.executeQuery(sql);
+            while (hasil.next()){
+                String id = hasil.getString("id_gedung");
+                String kd = hasil.getString("kd_gedung");
+                String nama = hasil.getString("nama_gedung");
+                String telp = hasil.getString("telp");
+                Boolean status = hasil.getBoolean("status");
+                String alamat = hasil.getString("alamat");
+                String harga =  (String) hasil.getString("harga");
+                
+                tKode.setText(kd);
+                tNama.setText(nama);
+                tTelp.setText(telp);
+                tHarga.setText(harga);
+                tAlamat.setText(alamat);
+                if(status){
+                    jcStat.setSelectedIndex(1);
+                }else{
+                    jcStat.setSelectedIndex(0);
+                }
+                isClick = true;
+                KD = id;
+            }
+        }catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "data gagal dipanggil | "+ex);
+        }
+    }//GEN-LAST:event_tbGedungMouseClicked
 
     /**
      * @param args the command line arguments
@@ -412,13 +537,13 @@ public class gedung extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
-    private javax.swing.JComboBox<String> jcJbt;
+    private javax.swing.JComboBox<String> jcStat;
     private javax.swing.JTextArea tAlamat;
     private javax.swing.JTextField tCari;
+    private javax.swing.JTextField tHarga;
     private javax.swing.JTextField tKode;
     private javax.swing.JTextField tNama;
-    private javax.swing.JTextField tNama1;
     private javax.swing.JTextField tTelp;
-    private javax.swing.JTable tbPegawai;
+    private javax.swing.JTable tbGedung;
     // End of variables declaration//GEN-END:variables
 }

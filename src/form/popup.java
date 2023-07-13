@@ -109,7 +109,7 @@ public class popup extends javax.swing.JFrame {
 
         jLabel1.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Nama Popup");
+        jLabel1.setText("Popup");
 
         tbPopup.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
